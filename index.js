@@ -61,19 +61,26 @@ async function run() {
     });
 
     app.post("/blogs", async (req, res) => {
-      const { post } = req.body;
+      const blog = req.body;
       const { token } = req.headers;
+      // console.log(req.headers);
+      console.log(req);
 
-      const { email } = jwt.decode(token);
-
-      const cursor = await usersCollection.find({ email });
-      const user = await cursor.toArray();
-
-      if (user[0]) {
-        const blogsCursor = await blogsCollection.insertOne(post);
-        res.send(blogsCursor);
+      if (!token) {
+        res.status(401).send({ message: "Unauthorized user" });
       } else {
-        res.send({ status: 401, message: "Unauthorized user" });
+        const { email } = jwt.decode(token);
+
+        const cursor = await usersCollection.find({ email });
+        const user = await cursor.toArray();
+
+        // console.log(blog);
+        if (user[0]) {
+          const blogsCursor = await blogsCollection.insertOne(blog);
+          res.send(blogsCursor);
+        } else {
+          res.status(401).send({ message: "Unauthorized user" });
+        }
       }
     });
 
