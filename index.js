@@ -38,6 +38,31 @@ const client = new MongoClient(uri, {
   },
 });
 
+const verifyToken = (req, res, next) => {
+  const { token } = req.headers;
+
+  // console.log(token);
+
+  if (!token) {
+    return res.status(401).send("Unauthorized access");
+  }
+
+  jwt.verify(token, process.env.access_token_secret, (error, decoded) => {
+    // console.log(error, decoded);
+    if (decoded?.email) {
+      next();
+    }
+
+    if (error) {
+      return res.status(403).send("Wrong token");
+    }
+  });
+
+  // console.log(decoded);
+
+  // const token = authHeader,
+};
+
 async function run() {
   client.connect();
   const blogsCollection = client.db("adztronaut").collection("blogs");
@@ -82,6 +107,48 @@ async function run() {
           res.status(401).send({ message: "Unauthorized user" });
         }
       }
+    });
+
+    app.delete("/blogs/:_id", verifyToken, async (req, res) => {
+      const { _id } = req.params;
+      const query = { _id: new ObjectId(_id) };
+
+      const blogsCursor = await blogsCollection.deleteOne(query);
+      res.send(blogsCursor);
+    });
+
+    app.put("/blogs/:_id", verifyToken, async (req, res) => {
+      const { _id } = req.params;
+      const query = { _id: new ObjectId(_id) };
+
+      const blog = req.body;
+
+      // console.log(blog);
+
+      const options = {
+        upsert: true,
+      };
+
+      const updatedDoc = {
+        $set: {
+          ...blog,
+        },
+      };
+      // console.log(blog);
+      const updateBlogCursor = await blogsCollection.updateOne(
+        query,
+        updatedDoc,
+        options
+      );
+      // const updatedBlogs = await updateBlogCursor.toArray();
+
+      // console.log(updateBlogCursor);
+      // console.log(updatedBlogs);
+
+      res.send({
+        ...updateBlogCursor,
+        message: `Blog ${_id} updated successfully`,
+      });
     });
 
     app.post("/login", async (req, res) => {
