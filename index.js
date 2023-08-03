@@ -5,6 +5,19 @@ const nodemailer = require("nodemailer");
 const app = express();
 require("dotenv").config();
 const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads"); // The folder where uploaded files will be stored.
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname); // Use the original file name for storage.
+  },
+});
+
+const upload = multer({ storage: storage });
 
 var corsOptions = {
   origin: "*",
@@ -85,11 +98,24 @@ async function run() {
       res.send(cursor);
     });
 
-    app.post("/blogs", async (req, res) => {
+    app.post("/blogs", upload.single("file"), async (req, res) => {
       const blog = req.body;
       const { token } = req.headers;
       // console.log(req.headers);
-      console.log(req);
+      // blog.blogImage = `http://localhost:5000/file/${
+      //   req.file.path.split("/")[1]
+      // }`;
+
+      console.log(
+        blog
+        // blogImage: `http://localhost:5000/file/${req.file.path.split("/")[1]}`,
+      );
+
+      // res.send(blog);
+
+      // res.send({
+      //   path: "http://localhost:5000/file/" + req.file.path.split("/")[1],
+      // });
 
       if (!token) {
         res.status(401).send({ message: "Unauthorized user" });
@@ -101,8 +127,8 @@ async function run() {
 
         // console.log(blog);
         if (user[0]) {
-          const blogsCursor = await blogsCollection.insertOne(blog);
-          res.send(blogsCursor);
+          // const blogsCursor = await blogsCollection.insertOne(blog);
+          // res.send(blogsCursor);
         } else {
           res.status(401).send({ message: "Unauthorized user" });
         }
