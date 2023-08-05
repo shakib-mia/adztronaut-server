@@ -6,6 +6,7 @@ const app = express();
 require("dotenv").config();
 const cors = require("cors");
 const multer = require("multer");
+const fs = require("fs");
 const path = require("path");
 
 const storage = multer.diskStorage({
@@ -106,9 +107,8 @@ async function run() {
       //   req.file.path.split("/")[1]
       // }`;
 
-
       const cursor = await blogsCollection.insertOne(blog);
-      res.send(cursor)
+      res.send(cursor);
 
       // res.send(blog);
 
@@ -137,6 +137,18 @@ async function run() {
     app.delete("/blogs/:_id", verifyToken, async (req, res) => {
       const { _id } = req.params;
       const query = { _id: new ObjectId(_id) };
+      const imageCursor = await blogsCollection.find(query);
+      const blogs = await imageCursor.toArray();
+
+      const filename = blogs[0].image.split("file/")[1];
+
+      fs.unlink(`./uploads/${filename}`, (err) => {
+        if (err) {
+          console.error("Error while deleting the file:", err);
+        } else {
+          console.log("File successfully deleted!");
+        }
+      });
 
       const blogsCursor = await blogsCollection.deleteOne(query);
       res.send(blogsCursor);
@@ -227,23 +239,29 @@ async function run() {
       }
     });
 
+    app.post("/file", upload.single("file"), (req, res) => {
+      res.send({
+        fileUrl:
+          req.protocol +
+          "://" +
+          req.get("host") +
+          req.originalUrl +
+          "/" +
+          req.file.filename,
+      });
+    });
 
-    app.post('/file', upload.single("file"), (req,res) => {
-      res.send({fileUrl: req.protocol + '://' + req.get('host') + req.originalUrl + '/' + req.file.filename});
-    })
-
-    app.get("/file/:filename", (req,res) => {
+    app.get("/file/:filename", (req, res) => {
       const options = {
         root: __dirname, // Replace this with the root directory you want to use.
       };
       const fileName = `./uploads/${req.params.filename}`;
       res.sendFile(fileName, options, (err) => {
         if (err) {
-          console.error('Error sending file:', err);
+          console.error("Error sending file:", err);
         }
       });
-    })
-
+    });
   } finally {
   }
 }
