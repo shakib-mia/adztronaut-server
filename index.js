@@ -98,7 +98,7 @@ async function run() {
       res.send(cursor);
     });
 
-    app.post("/blogs", upload.single("file"), async (req, res) => {
+    app.post("/blogs", async (req, res) => {
       const blog = req.body;
       const { token } = req.headers;
       // console.log(req.headers);
@@ -106,10 +106,9 @@ async function run() {
       //   req.file.path.split("/")[1]
       // }`;
 
-      console.log(
-        blog
-        // blogImage: `http://localhost:5000/file/${req.file.path.split("/")[1]}`,
-      );
+
+      const cursor = await blogsCollection.insertOne(blog);
+      res.send(cursor)
 
       // res.send(blog);
 
@@ -227,6 +226,24 @@ async function run() {
         res.send(postCursor);
       }
     });
+
+
+    app.post('/file', upload.single("file"), (req,res) => {
+      res.send({fileUrl: req.protocol + '://' + req.get('host') + req.originalUrl + '/' + req.file.filename});
+    })
+
+    app.get("/file/:filename", (req,res) => {
+      const options = {
+        root: __dirname, // Replace this with the root directory you want to use.
+      };
+      const fileName = `./uploads/${req.params.filename}`;
+      res.sendFile(fileName, options, (err) => {
+        if (err) {
+          console.error('Error sending file:', err);
+        }
+      });
+    })
+
   } finally {
   }
 }
