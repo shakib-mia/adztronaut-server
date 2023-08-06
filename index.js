@@ -55,14 +55,11 @@ const client = new MongoClient(uri, {
 const verifyToken = (req, res, next) => {
   const { token } = req.headers;
 
-  // console.log(token);
-
   if (!token) {
     return res.status(401).send("Unauthorized access");
   }
 
   jwt.verify(token, process.env.access_token_secret, (error, decoded) => {
-    // console.log(error, decoded);
     if (decoded?.email) {
       next();
     }
@@ -71,10 +68,6 @@ const verifyToken = (req, res, next) => {
       return res.status(403).send("Wrong token");
     }
   });
-
-  // console.log(decoded);
-
-  // const token = authHeader,
 };
 
 async function run() {
@@ -102,19 +95,9 @@ async function run() {
     app.post("/blogs", async (req, res) => {
       const blog = req.body;
       const { token } = req.headers;
-      // console.log(req.headers);
-      // blog.blogImage = `http://localhost:5000/file/${
-      //   req.file.path.split("/")[1]
-      // }`;
 
       const cursor = await blogsCollection.insertOne(blog);
       res.send(cursor);
-
-      // res.send(blog);
-
-      // res.send({
-      //   path: "http://localhost:5000/file/" + req.file.path.split("/")[1],
-      // });
 
       if (!token) {
         res.status(401).send({ message: "Unauthorized user" });
@@ -247,7 +230,7 @@ async function run() {
           req.get("host") +
           req.originalUrl +
           "/" +
-          req.file.filename,
+          req.file?.filename,
       });
     });
 
@@ -255,7 +238,7 @@ async function run() {
       const options = {
         root: __dirname, // Replace this with the root directory you want to use.
       };
-      const fileName = `./uploads/${req.params.filename}`;
+      const fileName = `./uploads/${req.params?.filename}`;
       res.sendFile(fileName, options, (err) => {
         if (err) {
           console.error("Error sending file:", err);
