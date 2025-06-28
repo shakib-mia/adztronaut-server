@@ -13,17 +13,6 @@ const client = new MongoClient(uri, {
   },
 });
 
-async function connectDB() {
-  try {
-    if (!client.isConnected?.()) {
-      await client.connect();
-      console.log("MongoDB connected successfully");
-    }
-  } catch (error) {
-    console.error("MongoDB connection error:", error);
-  }
-}
-
 const db = client.db("adztronaut");
 
 const blogsCollection = db.collection("blogs");
@@ -33,7 +22,7 @@ const worksCollection = db.collection("works");
 
 module.exports = {
   client,
-  connectDB,
+  // connectDB,
   blogsCollection,
   usersCollection,
   subscribersCollection,
