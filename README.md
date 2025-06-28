@@ -3,5 +3,6 @@
 ### .env
 
 `db_user`: 'adztronaut'
-`db_password`: 'r9lo6hzeHUHcpDPl'
+`db_password`: 'UaWymWdnUl4if7CO'
+
 # adztronaut-server

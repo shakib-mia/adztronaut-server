@@ -8,6 +8,12 @@ const cors = require("cors");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
+const blogs = require("./routes/blogs");
+const {
+  blogsCollection,
+  usersCollection,
+  subscribersCollection,
+} = require("./constants");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -37,12 +43,12 @@ app.get("/", (req, res) => {
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   auth: {
-    user: "beemediaindia@gmail.com",
-    pass: "wconuttoyodedgdy",
+    user: process.env.gmail_user,
+    pass: process.env.gmail_password,
   },
 });
 
-const uri = `mongodb+srv://adztronaut:UaWymWdnUl4if7CO@cluster0.v1ya6g8.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://adztronaut:${process.env.db_password}@cluster0.v1ya6g8.mongodb.net/?retryWrites=true&w=majority`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -72,102 +78,42 @@ const verifyToken = (req, res, next) => {
 
 async function run() {
   client.connect();
-  const blogsCollection = client.db("adztronaut").collection("blogs");
-  const usersCollection = client.db("adztronaut").collection("admin");
-  const subscribersCollection = client
-    .db("adztronaut")
-    .collection("subscribers");
+
+  const routes = [
+    {
+      endpoint: "/blogs",
+      path: "./routes/blogs",
+    },
+    {
+      endpoint: "/works",
+      path: "./routes/works",
+    },
+  ];
 
   try {
-    app.get("/blogs", async (req, res) => {
-      const query = {};
-      const cursor = await blogsCollection.find(query);
-      const blogs = await cursor.toArray();
-      res.send(blogs);
+    routes.map((route) => {
+      const router = require(route.path);
+      app.use(route.endpoint, router);
     });
 
-    app.get("/blogs/:_id", async (req, res) => {
-      const query = { _id: new ObjectId(req.params._id) };
-      const cursor = await blogsCollection.findOne(query);
-      res.send(cursor);
-    });
-
-    app.post("/blogs", async (req, res) => {
-      const blog = req.body;
-      const { token } = req.headers;
-
-      const cursor = await blogsCollection.insertOne(blog);
-      res.send(cursor);
-
-      if (!token) {
-        res.status(401).send({ message: "Unauthorized user" });
-      } else {
-        const { email } = jwt.decode(token);
-
-        const cursor = await usersCollection.find({ email });
-        const user = await cursor.toArray();
-
-        // console.log(blog);
-        if (user[0]) {
-          // const blogsCursor = await blogsCollection.insertOne(blog);
-          // res.send(blogsCursor);
-        } else {
-          res.status(401).send({ message: "Unauthorized user" });
-        }
+    app.post("/upload-image", upload.single("file"), (req, res) => {
+      if (!req.file) {
+        return res.status(400).send({ message: "No file uploaded" });
       }
-    });
 
-    app.delete("/blogs/:_id", verifyToken, async (req, res) => {
-      const { _id } = req.params;
-      const query = { _id: new ObjectId(_id) };
-      const imageCursor = await blogsCollection.find(query);
-      const blogs = await imageCursor.toArray();
-
-      const filename = blogs[0].image.split("file/")[1];
-
-      fs.unlink(`./uploads/${filename}`, (err) => {
-        if (err) {
-          console.error("Error while deleting the file:", err);
-        } else {
-          console.log("File successfully deleted!");
-        }
-      });
-
-      const blogsCursor = await blogsCollection.deleteOne(query);
-      res.send(blogsCursor);
-    });
-
-    app.put("/blogs/:_id", verifyToken, async (req, res) => {
-      const { _id } = req.params;
-      const query = { _id: new ObjectId(_id) };
-
-      const blog = req.body;
-
-      // console.log(blog);
-
-      const options = {
-        upsert: true,
-      };
-
-      const updatedDoc = {
-        $set: {
-          ...blog,
-        },
-      };
-      // console.log(blog);
-      const updateBlogCursor = await blogsCollection.updateOne(
-        query,
-        updatedDoc,
-        options
-      );
-      // const updatedBlogs = await updateBlogCursor.toArray();
-
-      // console.log(updateBlogCursor);
-      // console.log(updatedBlogs);
+      // File is already stored on the server by multer in the 'uploads' folder
+      const fileUrl =
+        req.protocol + "://" + req.get("host") + "/file/" + req.file.filename;
 
       res.send({
-        ...updateBlogCursor,
-        message: `Blog ${_id} updated successfully`,
+        fileUrl,
+        fileData: {
+          filename: req.file.filename,
+          path: req.file.path,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          uploadedAt: new Date(),
+        },
       });
     });
 
@@ -205,6 +151,54 @@ async function run() {
           res.status(200).send(info.response);
         }
       });
+    });
+
+    app.post("/contact", (req, res) => {
+      const { name, email, message, subject } = req.body;
+
+      const mailOptions = {
+        from: `"${name}" <${email}>`, // Sender shown as: "John Doe <john@example.com>"
+        to: process.env.gmail_user, // Your email to receive the message
+        subject: `📩 ${subject} from ${email}`, // Add an emoji to make it stand out
+        html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+        <h2 style="color: #7F00E1;">📬 New Message from Portfolio</h2>
+        <hr style="margin: 20px 0;" />
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+        <p><strong>Subject:</strong> ${subject}</p>
+        <p style="margin-top: 20px;"><strong>Message:</strong></p>
+        <p style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; white-space: pre-wrap;">${message}</p>
+        <hr style="margin: 20px 0;" />
+        <p style="font-size: 12px; color: #999;">This message was sent from your portfolio contact form.</p>
+      </div>
+    `,
+      };
+
+      // Save the contact message and send the email in parallel
+      Promise.all([
+        subscribersCollection.insertOne({ name, email, message, subject }),
+        new Promise((resolve, reject) => {
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(info.response);
+            }
+          });
+        }),
+      ])
+        .then(([dbResult, emailResponse]) => {
+          res.status(200).send({
+            message: "Contact message saved and email sent successfully",
+            dbResult,
+            emailResponse,
+          });
+        })
+        .catch((error) => {
+          console.error("Error in contact endpoint:", error);
+          res.status(500).send("Error saving contact message or sending email");
+        });
     });
 
     app.post("/subscribers", async (req, res) => {
@@ -251,5 +245,5 @@ async function run() {
 run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log("listening on port", port);
+  console.log(`live on http://localhost:${port}/`);
 });
