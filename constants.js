@@ -1,7 +1,9 @@
+// constants.js
+
 const { MongoClient, ServerApiVersion } = require("mongodb");
 
-const uri = `mongodb+srv://adztronaut:UaWymWdnUl4if7CO@cluster0.v1ya6g8.mongodb.net/?retryWrites=true&w=majority`;
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const uri = `mongodb+srv://adztronaut:${process.env.db_password}@cluster0.v1ya6g8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -9,13 +11,28 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
-const blogsCollection = client.db("adztronaut").collection("blogs");
-const usersCollection = client.db("adztronaut").collection("admin");
-const subscribersCollection = client.db("adztronaut").collection("subscribers");
-const worksCollection = client.db("adztronaut").collection("works");
+
+async function connectDB() {
+  try {
+    if (!client.isConnected?.()) {
+      await client.connect();
+      console.log("MongoDB connected successfully");
+    }
+  } catch (error) {
+    console.error("MongoDB connection error:", error);
+  }
+}
+
+const db = client.db("adztronaut");
+
+const blogsCollection = db.collection("blogs");
+const usersCollection = db.collection("admin");
+const subscribersCollection = db.collection("subscribers");
+const worksCollection = db.collection("works");
 
 module.exports = {
   client,
+  connectDB,
   blogsCollection,
   usersCollection,
   subscribersCollection,
