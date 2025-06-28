@@ -15,6 +15,17 @@ const {
   subscribersCollection,
 } = require("./constants");
 
+if (process.env.NODE_ENV === "production") {
+  // For Vercel deployment: export serverless handler
+  module.exports = serverless(app);
+} else {
+  // For local development: listen normally and use nodemon to auto-restart
+  const port = process.env.PORT || 5000;
+  app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+  });
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads"); // The folder where uploaded files will be stored.
@@ -244,6 +255,5 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.listen(port, () => {
-  console.log(`live on http://localhost:${port}/`);
-});
+const serverless = require("serverless-http");
+module.exports = serverless(app);
