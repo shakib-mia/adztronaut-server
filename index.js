@@ -61,6 +61,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const uri = `mongodb+srv://adztronaut:${process.env.db_password}@cluster0.v1ya6g8.mongodb.net/?retryWrites=true&w=majority`;
+console.log(process.env.db_password);
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
