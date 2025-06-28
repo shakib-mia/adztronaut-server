@@ -1,6 +1,7 @@
 // constants.js
 
 const { MongoClient, ServerApiVersion } = require("mongodb");
+require("dotenv").config(); // Ensure you have dotenv installed and configured
 
 const uri = `mongodb+srv://adztronaut:${process.env.db_password}@cluster0.v1ya6g8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
