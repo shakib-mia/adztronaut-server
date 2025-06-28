@@ -198,11 +198,15 @@ app.get("/file/:filename", (req, res) => {
 
 const port = process.env.PORT || 5000;
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
-
 const serverless = require("serverless-http");
-const path = require("path");
 
-module.exports = serverless(app);
+if (process.env.NODE_ENV === "production") {
+  // Vercel deploy হলে
+  module.exports = serverless(app);
+} else {
+  // Local এ nodemon দিয়ে চালানোর জন্য
+  const port = process.env.PORT || 5000;
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+}
