@@ -32,7 +32,7 @@ router.delete("/:_id", async (req, res) => {
 });
 
 router.put(
-  "/blogs/:_id",
+  "/:_id",
   // verifyToken,
   async (req, res) => {
     const { _id } = req.params;
