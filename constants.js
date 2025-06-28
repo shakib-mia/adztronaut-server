@@ -1,7 +1,6 @@
-// constants.js
-
+// // constants.js
 const { MongoClient, ServerApiVersion } = require("mongodb");
-require("dotenv").config(); // Ensure you have dotenv installed and configured
+require("dotenv").config();
 
 const uri = `mongodb+srv://adztronaut:${process.env.db_password}@cluster0.v1ya6g8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -13,6 +12,13 @@ const client = new MongoClient(uri, {
   },
 });
 
+async function connectDB() {
+  if (!client.topology || !client.topology.isConnected()) {
+    await client.connect();
+    console.log("✅ Connected to MongoDB");
+  }
+}
+
 const db = client.db("adztronaut");
 
 const blogsCollection = db.collection("blogs");
@@ -22,7 +28,7 @@ const worksCollection = db.collection("works");
 
 module.exports = {
   client,
-  // connectDB,
+  connectDB,
   blogsCollection,
   usersCollection,
   subscribersCollection,
