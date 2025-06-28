@@ -94,18 +94,18 @@ async function run() {
   const routes = [
     {
       endpoint: "/blogs",
-      path: "./routes/blogs.js",
+      path: require("./routes/blogs.js"),
     },
     {
       endpoint: "/works",
-      path: "./routes/works.js",
+      path: require("./routes/works.js"),
     },
   ];
 
   try {
     routes.map((route) => {
-      const router = require(route.path);
-      app.use(route.endpoint, router);
+      // const router = require(route.path);
+      app.use(route.endpoint, route.path);
     });
 
     app.post("/upload-image", upload.single("file"), (req, res) => {
