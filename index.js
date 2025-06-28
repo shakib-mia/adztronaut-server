@@ -94,11 +94,11 @@ async function run() {
   const routes = [
     {
       endpoint: "/blogs",
-      path: "./routes/blogs",
+      path: "./routes/blogs.js",
     },
     {
       endpoint: "/works",
-      path: "./routes/works",
+      path: "./routes/works.js",
     },
   ];
 
