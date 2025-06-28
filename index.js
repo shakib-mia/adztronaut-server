@@ -9,6 +9,7 @@ const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 const blogs = require("./routes/blogs");
+const serverless = require("serverless-http");
 const {
   blogsCollection,
   usersCollection,
@@ -255,5 +256,4 @@ async function run() {
 }
 run().catch(console.dir);
 
-const serverless = require("serverless-http");
 module.exports = serverless(app);
