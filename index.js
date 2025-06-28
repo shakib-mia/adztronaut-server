@@ -283,11 +283,8 @@ const upload = multer({ storage });
 // ... baki routes exactly same ...
 
 // এইখানে আর কোনো run() function নাই
-if (process.env.NODE_ENV === "production") {
-  module.exports = serverless(app);
-} else {
-  const port = process.env.PORT || 5000;
-  app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
-  });
-}
+
+const port = process.env.PORT || 5000;
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
